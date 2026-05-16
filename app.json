@@ -23,7 +23,11 @@
         "backgroundColor": "#000000"
       },
       "package": "com.neonsnake.app",
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -31,6 +35,12 @@
     "plugins": [
       "expo-av",
       "expo-localization"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6646773a-8263-40a4-8e3c-4516ad96adc2"
+      }
+    },
+    "owner": "jorge0000"
   }
 }
