@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Neon Snake",
-    "slug": "neon-snake",
+    "slug": "snake",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
