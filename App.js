@@ -11,10 +11,15 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const savedLang = await getLanguage();
-      const lang = savedLang || getSystemLanguage();
-      setLocale(lang);
-      setReady(true);
+      try {
+        const savedLang = await getLanguage();
+        const lang = savedLang || getSystemLanguage();
+        setLocale(lang);
+      } catch {
+        setLocale('en');
+      } finally {
+        setReady(true);
+      }
     })();
   }, []);
 
