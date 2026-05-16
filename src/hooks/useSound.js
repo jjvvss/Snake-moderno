@@ -1,21 +1,25 @@
 import { useRef, useCallback } from 'react';
+import { Audio } from 'expo-av';
 
 export const useSound = (enabled) => {
   const sounds = useRef({});
 
-  // Gracefully load sounds - these files would be in assets/sounds/
-  // Game works silently if files don't exist
   const loadSounds = useCallback(async () => {
-    // Sound files not bundled - system works silently.
-    // To add sounds: place MP3 files in assets/sounds/ and require() them here,
-    // then use Audio.Sound.createAsync() to load each one.
-    // Example:
-    // try {
-    //   const { sound: eatSound } = await Audio.Sound.createAsync(
-    //     require('../../assets/sounds/eat.mp3')
-    //   );
-    //   sounds.current.eat = eatSound;
-    // } catch {}
+    try {
+      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+      const files = {
+        eat:     require('../../assets/sounds/eat.wav'),
+        death:   require('../../assets/sounds/death.wav'),
+        powerup: require('../../assets/sounds/powerup.wav'),
+        levelup: require('../../assets/sounds/levelup.wav'),
+      };
+      for (const [key, src] of Object.entries(files)) {
+        try {
+          const { sound } = await Audio.Sound.createAsync(src);
+          sounds.current[key] = sound;
+        } catch {}
+      }
+    } catch {}
   }, []);
 
   const play = useCallback(

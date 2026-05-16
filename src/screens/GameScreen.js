@@ -43,13 +43,21 @@ export default function GameScreen() {
   const haptics = useHaptics(vibrationEnabled);
   const sound = useSound(soundEnabled);
 
-  // Use refs to avoid stale closure issues with callbacks set inline
+  // Refs to avoid stale closures in callbacks
   const renderStateRef = useRef(renderState);
   renderStateRef.current = renderState;
+  const prevLevelRef = useRef(1);
 
   onEatCallback.current = () => {
     haptics.impact('light');
     sound.play('eat');
+    // Detect level-up: level is updated in renderState after eat
+    const newLevel = renderStateRef.current.level;
+    if (newLevel > prevLevelRef.current) {
+      prevLevelRef.current = newLevel;
+      sound.play('levelup');
+      haptics.notification('success');
+    }
   };
 
   onDeathCallback.current = () => {
@@ -62,6 +70,17 @@ export default function GameScreen() {
       });
     }, 700);
   };
+
+  // Play powerup sound when an active power-up is first collected
+  const prevActivePURef = useRef(null);
+  useEffect(() => {
+    const current = renderState.activePowerUp;
+    if (current && !prevActivePURef.current) {
+      sound.play('powerup');
+      haptics.impact('heavy');
+    }
+    prevActivePURef.current = current;
+  }, [renderState.activePowerUp]);
 
   useEffect(() => {
     (async () => {
