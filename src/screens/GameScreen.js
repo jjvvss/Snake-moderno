@@ -14,10 +14,11 @@ import {
   GAME_STATUS, GAME_MODES, POWER_UP_TYPES, SKINS,
   ACTUAL_BOARD_SIZE,
 } from '../utils/constants';
-import { getSelectedSkin, getSoundEnabled, getVibrationEnabled, getColorTheme } from '../utils/storage';
+import {
+  getSelectedSkin, getSoundEnabled, getVibrationEnabled, getColorTheme,
+  getSwipeSensitivity, getTutorialShown, setTutorialShown,
+} from '../utils/storage';
 import { COLOR_THEMES } from '../utils/constants';
-
-const SWIPE_THRESHOLD = 20;
 
 export default function GameScreen() {
   const navigation = useNavigation();
@@ -29,6 +30,9 @@ export default function GameScreen() {
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [accentColor, setAccentColor] = useState('#00FF41');
   const [paused, setPaused] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [swipeThreshold, setSwipeThreshold] = useState(20);
 
   const {
     renderState,
@@ -47,6 +51,7 @@ export default function GameScreen() {
   const renderStateRef = useRef(renderState);
   renderStateRef.current = renderState;
   const prevLevelRef = useRef(1);
+  const swipeThresholdRef = useRef(20);
 
   onEatCallback.current = () => {
     haptics.impact('light');
@@ -63,10 +68,16 @@ export default function GameScreen() {
   onDeathCallback.current = () => {
     haptics.notification('error');
     sound.play('death');
+    setShake(true);
+    setTimeout(() => setShake(false), 400);
     setTimeout(() => {
       navigation.replace('GameOver', {
         score: renderStateRef.current.score,
         mode,
+        replayHistory: renderStateRef.current.replayHistory,
+        foodsEaten: renderStateRef.current.foodsEaten,
+        snakeLength: renderStateRef.current.snake ? renderStateRef.current.snake.length : 3,
+        gameStartTime: renderStateRef.current.gameStartTime,
       });
     }, 700);
   };
@@ -84,11 +95,13 @@ export default function GameScreen() {
 
   useEffect(() => {
     (async () => {
-      const [skinId, se, ve, theme] = await Promise.all([
+      const [skinId, se, ve, theme, sensitivity, tutorialShown] = await Promise.all([
         getSelectedSkin(),
         getSoundEnabled(),
         getVibrationEnabled(),
         getColorTheme(),
+        getSwipeSensitivity(),
+        getTutorialShown(),
       ]);
       setSoundEnabled(se);
       setVibrationEnabled(ve);
@@ -96,11 +109,22 @@ export default function GameScreen() {
       setSkin(foundSkin);
       const themeObj = COLOR_THEMES.find((t) => t.id === theme);
       if (themeObj) setAccentColor(themeObj.primary);
+      setSwipeThreshold(sensitivity);
+      swipeThresholdRef.current = sensitivity;
+
+      if (!tutorialShown) {
+        setShowTutorial(true);
+      }
 
       await sound.loadSounds();
       startGame(mode);
     })();
     return () => {};
+  }, []);
+
+  const dismissTutorial = useCallback(async () => {
+    setShowTutorial(false);
+    await setTutorialShown();
   }, []);
 
   const swipeStart = useRef({ x: 0, y: 0 });
@@ -117,7 +141,7 @@ export default function GameScreen() {
         const dy = e.nativeEvent.pageY - swipeStart.current.y;
         const absDx = Math.abs(dx);
         const absDy = Math.abs(dy);
-        if (Math.max(absDx, absDy) < SWIPE_THRESHOLD) return;
+        if (Math.max(absDx, absDy) < swipeThresholdRef.current) return;
         if (absDx > absDy) {
           changeDirection(dx > 0 ? 'RIGHT' : 'LEFT');
         } else {
@@ -160,6 +184,8 @@ export default function GameScreen() {
       : '#FF00FF'
     : '#FFFFFF';
 
+  const isCountdown = renderState.status === 'COUNTDOWN';
+
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
@@ -185,7 +211,7 @@ export default function GameScreen() {
         </View>
 
         <TouchableOpacity onPress={handlePause} style={styles.pauseBtn}>
-          <Text style={[styles.pauseText, { color: accentColor }]}>⏸</Text>
+          <Text style={[styles.pauseText, { color: accentColor }]}>{'⏸'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -199,13 +225,34 @@ export default function GameScreen() {
         <GameBoard
           renderState={renderState}
           skin={skin}
-          particles={renderState.particles}
+          particles={renderState.particles || []}
+          shake={shake}
+          accentColor={accentColor}
         />
+
+        {isCountdown && renderState.countdown > 0 && (
+          <View style={styles.countdownOverlay}>
+            <Text style={[styles.countdownText, { color: accentColor }]}>
+              {renderState.countdown}
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.controls}>
         <DirectionalButtons onDirection={changeDirection} accentColor={accentColor} />
       </View>
+
+      {showTutorial && (
+        <TouchableOpacity style={styles.tutorialOverlay} onPress={dismissTutorial} activeOpacity={1}>
+          <View style={styles.tutorialBox}>
+            <Text style={styles.tutorialSwipe}>{t('tutorial.swipe')}</Text>
+            <Text style={styles.tutorialArrow}>{'← ↑ → ↓'}</Text>
+            <Text style={styles.tutorialDpad}>{t('tutorial.dpad')}</Text>
+            <Text style={styles.tutorialTap}>{t('tutorial.tap')}</Text>
+          </View>
+        </TouchableOpacity>
+      )}
 
       <Modal visible={paused} transparent animationType="fade">
         <View style={styles.modalOverlay}>
@@ -258,6 +305,61 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 12,
     paddingTop: 8,
+  },
+  countdownOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  countdownText: {
+    fontSize: 96,
+    fontWeight: '900',
+    letterSpacing: 4,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 30,
+  },
+  tutorialOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.80)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+  },
+  tutorialBox: {
+    backgroundColor: '#0A0A0A',
+    borderWidth: 1,
+    borderColor: '#00FF4160',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    width: 280,
+  },
+  tutorialSwipe: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  tutorialArrow: {
+    color: '#00FF41',
+    fontSize: 28,
+    marginBottom: 12,
+    letterSpacing: 8,
+  },
+  tutorialDpad: {
+    color: '#888888',
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  tutorialTap: {
+    color: '#666666',
+    fontSize: 13,
+    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,

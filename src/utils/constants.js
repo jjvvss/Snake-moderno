@@ -16,10 +16,12 @@ export const GAME_MODES = {
   CLASSIC: 'CLASSIC',
   TIME_TRIAL: 'TIME_TRIAL',
   INFINITE: 'INFINITE',
+  DAILY: 'DAILY',
 };
 
 export const GAME_STATUS = {
   IDLE: 'IDLE',
+  COUNTDOWN: 'COUNTDOWN',
   PLAYING: 'PLAYING',
   PAUSED: 'PAUSED',
   GAME_OVER: 'GAME_OVER',
@@ -41,9 +43,47 @@ export const POWER_UP_TYPES = {
 export const POWER_UP_DURATION = 4000;
 export const POWER_UP_LIFETIME = 8000;
 export const POWER_UP_SPAWN_CHANCE = 0.2;
-export const TIME_TRIAL_DURATION = 60;
 export const POINTS_PER_FOOD = 10;
 export const LEVEL_THRESHOLD = 50;
+
+// Food types
+export const FOOD_TYPES = { NORMAL: 'NORMAL', GOLDEN: 'GOLDEN', POISONED: 'POISONED' };
+export const FOOD_GOLDEN_CHANCE = 0.10;
+export const FOOD_POISONED_CHANCE = 0.06;
+export const FOOD_POINTS = { NORMAL: 10, GOLDEN: 30, POISONED: -5 };
+export const FOOD_COLORS = { NORMAL: '#FF0066', GOLDEN: '#FFD700', POISONED: '#8800CC' };
+
+// Time Trial (inverse countdown)
+export const TIME_TRIAL_START = 30;   // starting seconds
+export const TIME_TRIAL_MAX = 90;     // cap
+export const TIME_PER_FOOD = { NORMAL: 7, GOLDEN: 14, POISONED: 0 };
+
+// Combo
+export const COMBO_WINDOW_MS = 5000;
+export const COMBO_THRESHOLDS = [{ count: 5, mult: 2 }, { count: 3, mult: 1.5 }];
+
+// Portals (unlock at level 3)
+export const PORTAL_UNLOCK_LEVEL = 3;
+export const PORTAL_COOLDOWN_TICKS = 10;
+
+// Moving obstacles (level 6+)
+export const MOVING_OBS_LEVEL = 6;
+export const MOVING_OBS_TICKS = 3; // move every N ticks
+
+// Countdown before game
+export const COUNTDOWN_SECONDS = 3;
+
+// Achievements
+export const ACHIEVEMENTS = [
+  { id: 'first_game', nameKey: 'achievements.firstGame', descKey: 'achievements.firstGameDesc', icon: '🎮' },
+  { id: 'score_100', nameKey: 'achievements.score100', descKey: 'achievements.score100Desc', icon: '💯' },
+  { id: 'long_snake', nameKey: 'achievements.longSnake', descKey: 'achievements.longSnakeDesc', icon: '🐍' },
+  { id: 'speed_demon', nameKey: 'achievements.speedDemon', descKey: 'achievements.speedDemonDesc', icon: '⚡' },
+  { id: 'golden_touch', nameKey: 'achievements.goldenTouch', descKey: 'achievements.goldenTouchDesc', icon: '✨' },
+  { id: 'veteran', nameKey: 'achievements.veteran', descKey: 'achievements.veteranDesc', icon: '🏆' },
+  { id: 'survivor', nameKey: 'achievements.survivor', descKey: 'achievements.survivorDesc', icon: '⏱' },
+  { id: 'collector', nameKey: 'achievements.collector', descKey: 'achievements.collectorDesc', icon: '💎' },
+];
 
 export const SKINS = [
   { id: 'default', nameKey: 'skins.default', color: '#00FF41', headColor: '#00FF41', glowColor: '#00FF4180', unlockScore: 0 },

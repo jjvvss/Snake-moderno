@@ -5,6 +5,8 @@ import HomeScreen from '../screens/HomeScreen';
 import GameScreen from '../screens/GameScreen';
 import GameOverScreen from '../screens/GameOverScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import AchievementsScreen from '../screens/AchievementsScreen';
+import StatsScreen from '../screens/StatsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,6 +33,8 @@ export default function AppNavigator() {
         <Stack.Screen name="Game" component={GameScreen} />
         <Stack.Screen name="GameOver" component={GameOverScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="Achievements" component={AchievementsScreen} />
+        <Stack.Screen name="Stats" component={StatsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -11,6 +11,7 @@ import {
   getLanguage, setLanguage,
   getSelectedSkin, setSelectedSkin,
   getTotalScore,
+  getSwipeSensitivity, setSwipeSensitivity,
 } from '../utils/storage';
 import { t, setLocale, SUPPORTED_LANGUAGES } from '../i18n';
 import { SKINS, COLOR_THEMES } from '../utils/constants';
@@ -24,17 +25,19 @@ export default function SettingsScreen() {
   const [language, setLangState] = useState('en');
   const [selectedSkinId, setSelectedSkinId] = useState('default');
   const [totalScore, setTotalScore] = useState(0);
+  const [sensitivity, setSensitivity] = useState(20);
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     (async () => {
-      const [s, v, th, lang, skinId, ts] = await Promise.all([
+      const [s, v, th, lang, skinId, ts, sens] = await Promise.all([
         getSoundEnabled(),
         getVibrationEnabled(),
         getColorTheme(),
         getLanguage(),
         getSelectedSkin(),
         getTotalScore(),
+        getSwipeSensitivity(),
       ]);
       setSound(s);
       setVibration(v);
@@ -42,6 +45,7 @@ export default function SettingsScreen() {
       setLangState(lang || 'en');
       setSelectedSkinId(skinId || 'default');
       setTotalScore(ts || 0);
+      setSensitivity(sens || 20);
     })();
   }, []);
 
@@ -75,6 +79,12 @@ export default function SettingsScreen() {
     }
   };
 
+  const changeSensitivity = async (delta) => {
+    const newVal = Math.min(50, Math.max(10, sensitivity + delta));
+    setSensitivity(newVal);
+    await setSwipeSensitivity(newVal);
+  };
+
   const accentColor = COLOR_THEMES.find((c) => c.id === theme)?.primary || '#00FF41';
 
   return (
@@ -83,7 +93,7 @@ export default function SettingsScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={[styles.backText, { color: accentColor }]}>← {t('settings.back')}</Text>
+            <Text style={[styles.backText, { color: accentColor }]}>{'←'} {t('settings.back')}</Text>
           </TouchableOpacity>
           <Text style={[styles.title, { color: accentColor }]}>{t('settings.title')}</Text>
           <View style={{ width: 80 }} />
@@ -109,6 +119,20 @@ export default function SettingsScreen() {
             trackColor={{ false: '#333', true: accentColor + '80' }}
             thumbColor={vibration ? accentColor : '#666'}
           />
+        </View>
+
+        {/* Swipe Sensitivity */}
+        <View style={[styles.section, { borderColor: accentColor + '30' }]}>
+          <Text style={styles.sectionLabel}>{t('settings.swipeSensitivity')}</Text>
+          <View style={styles.sensitivityRow}>
+            <TouchableOpacity onPress={() => changeSensitivity(-5)} style={styles.sensBtn}>
+              <Text style={styles.sensBtnText}>{'-'}</Text>
+            </TouchableOpacity>
+            <Text style={[styles.sensValue, { color: accentColor }]}>{sensitivity}px</Text>
+            <TouchableOpacity onPress={() => changeSensitivity(5)} style={styles.sensBtn}>
+              <Text style={styles.sensBtnText}>{'+'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Color Theme */}
@@ -223,6 +247,34 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     textTransform: 'uppercase',
     marginBottom: 14,
+  },
+  sensitivityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  sensBtn: {
+    width: 44,
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0A0A0A',
+  },
+  sensBtnText: {
+    color: '#CCCCCC',
+    fontSize: 22,
+    fontWeight: 'bold',
+    lineHeight: 26,
+  },
+  sensValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    minWidth: 60,
+    textAlign: 'center',
   },
   themeRow: { flexDirection: 'row', gap: 14 },
   themeCircle: {

@@ -140,3 +140,68 @@ export const calculateSpeed = (foodsEaten, activePowerUpType = null) => {
 
   return speed;
 };
+
+// Typed food generation
+export const generateTypedFood = (snake, obstacles, powerUp) => {
+  const pos = generateFood(snake, obstacles, powerUp);
+  const r = Math.random();
+  let type = 'NORMAL';
+  if (r < 0.06) type = 'POISONED';
+  else if (r < 0.16) type = 'GOLDEN';
+  return { ...pos, type };
+};
+
+// Portal generation (2 portals far apart)
+export const generatePortals = (snake, obstacles, food) => {
+  const occupied = new Set([
+    ...snake.map(s => `${s.x},${s.y}`),
+    ...obstacles.map(o => `${o.x},${o.y}`),
+    `${food.x},${food.y}`,
+  ]);
+  const portals = [];
+  let attempts = 0;
+  while (portals.length < 2 && attempts < 500) {
+    attempts++;
+    const pos = { x: Math.floor(Math.random() * GRID_SIZE), y: Math.floor(Math.random() * GRID_SIZE) };
+    const key = `${pos.x},${pos.y}`;
+    if (occupied.has(key)) continue;
+    if (portals.length === 1) {
+      const dx = Math.abs(pos.x - portals[0].x);
+      const dy = Math.abs(pos.y - portals[0].y);
+      if (dx + dy < 6) continue; // ensure portals are far apart
+    }
+    occupied.add(key);
+    portals.push({ ...pos, id: portals.length });
+  }
+  return portals.length === 2 ? portals : [];
+};
+
+// Moving obstacles: each has dx/dy direction
+export const generateMovingObstacles = (level, snake) => {
+  const statics = generateObstacles(level, snake);
+  if (level < 6) return statics.map(o => ({ ...o, dx: 0, dy: 0 }));
+  // Make up to 3 obstacles moving
+  return statics.map((o, i) => {
+    if (i < 3) {
+      const dirs = [{ dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }];
+      const d = dirs[Math.floor(Math.random() * dirs.length)];
+      return { ...o, ...d };
+    }
+    return { ...o, dx: 0, dy: 0 };
+  });
+};
+
+// Daily challenge seed from today's date
+export const getDailyChallengeSeed = () => {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+};
+
+// Simple LCG seeded random
+export const createSeededRandom = (seed) => {
+  let s = seed;
+  return () => {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+};
