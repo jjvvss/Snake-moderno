@@ -30,7 +30,8 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "baseUrl": "/Snake-moderno"
     },
     "plugins": [
       "expo-av",
